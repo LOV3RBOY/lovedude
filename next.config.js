@@ -4,15 +4,19 @@ const nextConfig = {
   images: {
     domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com'],
   },
-  experimental: {
-    appDir: true
-  },
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       'three': require.resolve('three')
     }
     return config
+  },
+  experimental: {
+    appDir: true
+  },
+  distDir: '.next',
+  generateBuildId: async () => {
+    return 'build-13.4.19'
   }
 }
 

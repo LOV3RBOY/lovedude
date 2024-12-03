@@ -2,26 +2,24 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com'],
-    unoptimized: true
+    unoptimized: true,
+    domains: ['hebbkx1anhila5yf.public.blob.vercel-storage.com']
   },
   output: 'export',
   distDir: 'out',
   webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'three': require.resolve('three')
-    }
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
-      path: false,
+      net: false,
+      dns: false,
+      tls: false,
+      assert: false,
       crypto: false,
-      stream: false,
       http: false,
       https: false,
-      zlib: false,
-      'crypto-browserify': require.resolve('crypto-browserify'),
+      stream: false,
+      zlib: false
     }
     return config
   }

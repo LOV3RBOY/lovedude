@@ -1,13 +1,11 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
-import { useFrame, ThreeEvent } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 import { gsap } from 'gsap';
-
-// Dynamically import Three.js and drei
-const THREE = dynamic(() => import('three'), { ssr: false });
-const { useGLTF } = dynamic(() => import('@react-three/drei'), { ssr: false });
+import * as THREE from 'three';
+import type { Mesh, Group, Material, MeshStandardMaterial } from 'three';
 
 interface LvrboyModelProps {
   onLoad?: () => void;
@@ -16,21 +14,20 @@ interface LvrboyModelProps {
 const MODEL_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/base_basic_shaded-oGbOpo7C4j1n3fXAzOgv0SoKRZlswF.glb';
 
 function LvrboyModel({ onLoad }: LvrboyModelProps) {
-  const group = useRef(null);
+  const group = useRef<Group>(null);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const lastClickTime = useRef(0);
-  const faceMesh = useRef(null);
-  const originalMaterial = useRef(null);
+  const faceMesh = useRef<Mesh | null>(null);
+  const originalMaterial = useRef<Material | null>(null);
 
-  // Load the model only on client side
-  const { scene } = useGLTF(MODEL_URL, true, true);
+  const { scene } = useGLTF(MODEL_URL);
 
   useEffect(() => {
-    if (!scene || typeof window === 'undefined') return;
+    if (!scene) return;
 
     scene.traverse((child) => {
-      if (child.isMesh) {
+      if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
 
@@ -42,11 +39,11 @@ function LvrboyModel({ onLoad }: LvrboyModelProps) {
         if (name.includes('face') || name.includes('head')) {
           faceMesh.current = child;
 
-          if (child.material) {
+          if (child.material instanceof THREE.Material) {
             const newMaterial = child.material.clone();
             originalMaterial.current = newMaterial.clone();
             
-            if (newMaterial.isMeshStandardMaterial) {
+            if (newMaterial instanceof THREE.MeshStandardMaterial) {
               newMaterial.color.setHSL(
                 newMaterial.color.getHSL({ h: 0, s: 0, l: 0 }).h,
                 0.05,
@@ -72,9 +69,9 @@ function LvrboyModel({ onLoad }: LvrboyModelProps) {
     return () => {
       if (originalMaterial.current) originalMaterial.current.dispose();
       scene.traverse((child) => {
-        if (child.isMesh) {
+        if (child instanceof THREE.Mesh) {
           child.geometry.dispose();
-          if (child.material) {
+          if (child.material instanceof THREE.Material) {
             child.material.dispose();
           }
         }
@@ -90,29 +87,29 @@ function LvrboyModel({ onLoad }: LvrboyModelProps) {
     const scale = 1 + Math.sin(time * 3) * 0.01;
     faceMesh.current.scale.setScalar(scale);
 
-    if (faceMesh.current.material && faceMesh.current.material.isMeshStandardMaterial) {
+    if (faceMesh.current.material instanceof THREE.MeshStandardMaterial) {
       faceMesh.current.material.emissiveIntensity = 0.2 + Math.sin(time * 2) * 0.1;
     }
   });
 
   const handlePointerOver = () => {
+    setHovered(true);
     if (typeof window !== 'undefined') {
-      setHovered(true);
       document.body.style.cursor = 'pointer';
     }
   };
 
   const handlePointerOut = () => {
+    setHovered(false);
     if (typeof window !== 'undefined') {
-      setHovered(false);
       document.body.style.cursor = 'auto';
     }
   };
 
-  const handleClick = (event: ThreeEvent<MouseEvent>) => {
+  const handleClick = (event: { stopPropagation: () => void; object: THREE.Object3D }) => {
     event.stopPropagation();
     
-    if (!event.object || !event.object.isMesh) return;
+    if (!(event.object instanceof THREE.Mesh)) return;
     
     const mesh = event.object;
     
@@ -120,7 +117,7 @@ function LvrboyModel({ onLoad }: LvrboyModelProps) {
     const timeSinceLastClick = currentTime - lastClickTime.current;
 
     if (timeSinceLastClick < 300) {
-      if (mesh.material && mesh.material.isMeshStandardMaterial) {
+      if (mesh.material instanceof THREE.MeshStandardMaterial) {
         gsap.to(mesh.material, {
           emissiveIntensity: 0.8,
           roughness: 0.1,
@@ -150,7 +147,7 @@ function LvrboyModel({ onLoad }: LvrboyModelProps) {
     lastClickTime.current = currentTime;
   };
 
-  if (!scene || !modelLoaded || typeof window === 'undefined') {
+  if (!scene || !modelLoaded) {
     return null;
   }
 
@@ -192,8 +189,9 @@ function LvrboyModel({ onLoad }: LvrboyModelProps) {
   );
 }
 
-// Export as a dynamic component with no SSR
-export default dynamic(() => Promise.resolve(LvrboyModel), {
-  ssr: false
-});
+// Preload the model
+useGLTF.preload(MODEL_URL);
+
+// Export the component
+export default LvrboyModel;
 

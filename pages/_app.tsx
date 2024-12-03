@@ -11,6 +11,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <Head>
         <title>LVRBOY</title>
         <meta name="description" content="LVRBOY interactive 3D experience" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <main className={inter.className}>
         <Component {...pageProps} />

@@ -24,9 +24,6 @@ const nextConfig = {
       'crypto-browserify': require.resolve('crypto-browserify'),
     }
     return config
-  },
-  experimental: {
-    appDir: false
   }
 }
 

@@ -1,30 +1,36 @@
 'use client';
 
-import { useGLTF } from '@react-three/drei';
+import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
 import { gsap } from 'gsap';
+
+// Dynamically import Three.js and drei
+const THREE = dynamic(() => import('three'), { ssr: false });
+const { useGLTF } = dynamic(() => import('@react-three/drei'), { ssr: false });
 
 interface LvrboyModelProps {
   onLoad?: () => void;
 }
 
-export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
-  const group = useRef<THREE.Group>(null);
+const MODEL_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/base_basic_shaded-oGbOpo7C4j1n3fXAzOgv0SoKRZlswF.glb';
+
+function LvrboyModel({ onLoad }: LvrboyModelProps) {
+  const group = useRef(null);
   const [modelLoaded, setModelLoaded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const lastClickTime = useRef(0);
-  const faceMesh = useRef<THREE.Mesh | null>(null);
-  const originalMaterial = useRef<THREE.Material | null>(null);
+  const faceMesh = useRef(null);
+  const originalMaterial = useRef(null);
 
-  const { scene } = useGLTF('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/base_basic_shaded-oGbOpo7C4j1n3fXAzOgv0SoKRZlswF.glb', true);
+  // Load the model only on client side
+  const { scene } = useGLTF(MODEL_URL, true, true);
 
   useEffect(() => {
-    if (!scene) return;
+    if (!scene || typeof window === 'undefined') return;
 
     scene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
+      if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
 
@@ -36,11 +42,11 @@ export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
         if (name.includes('face') || name.includes('head')) {
           faceMesh.current = child;
 
-          if (child.material instanceof THREE.Material) {
+          if (child.material) {
             const newMaterial = child.material.clone();
             originalMaterial.current = newMaterial.clone();
             
-            if (newMaterial instanceof THREE.MeshStandardMaterial) {
+            if (newMaterial.isMeshStandardMaterial) {
               newMaterial.color.setHSL(
                 newMaterial.color.getHSL({ h: 0, s: 0, l: 0 }).h,
                 0.05,
@@ -66,9 +72,9 @@ export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
     return () => {
       if (originalMaterial.current) originalMaterial.current.dispose();
       scene.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
+        if (child.isMesh) {
           child.geometry.dispose();
-          if (child.material instanceof THREE.Material) {
+          if (child.material) {
             child.material.dispose();
           }
         }
@@ -84,25 +90,29 @@ export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
     const scale = 1 + Math.sin(time * 3) * 0.01;
     faceMesh.current.scale.setScalar(scale);
 
-    if (faceMesh.current.material instanceof THREE.MeshStandardMaterial) {
+    if (faceMesh.current.material && faceMesh.current.material.isMeshStandardMaterial) {
       faceMesh.current.material.emissiveIntensity = 0.2 + Math.sin(time * 2) * 0.1;
     }
   });
 
   const handlePointerOver = () => {
-    setHovered(true);
-    document.body.style.cursor = 'pointer';
+    if (typeof window !== 'undefined') {
+      setHovered(true);
+      document.body.style.cursor = 'pointer';
+    }
   };
 
   const handlePointerOut = () => {
-    setHovered(false);
-    document.body.style.cursor = 'auto';
+    if (typeof window !== 'undefined') {
+      setHovered(false);
+      document.body.style.cursor = 'auto';
+    }
   };
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     
-    if (!(event.object instanceof THREE.Mesh)) return;
+    if (!event.object || !event.object.isMesh) return;
     
     const mesh = event.object;
     
@@ -110,7 +120,7 @@ export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
     const timeSinceLastClick = currentTime - lastClickTime.current;
 
     if (timeSinceLastClick < 300) {
-      if (mesh.material instanceof THREE.MeshStandardMaterial) {
+      if (mesh.material && mesh.material.isMeshStandardMaterial) {
         gsap.to(mesh.material, {
           emissiveIntensity: 0.8,
           roughness: 0.1,
@@ -140,7 +150,7 @@ export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
     lastClickTime.current = currentTime;
   };
 
-  if (!scene || !modelLoaded) {
+  if (!scene || !modelLoaded || typeof window === 'undefined') {
     return null;
   }
 
@@ -182,5 +192,8 @@ export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
   );
 }
 
-useGLTF.preload('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/base_basic_shaded-oGbOpo7C4j1n3fXAzOgv0SoKRZlswF.glb');
+// Export as a dynamic component with no SSR
+export default dynamic(() => Promise.resolve(LvrboyModel), {
+  ssr: false
+});
 

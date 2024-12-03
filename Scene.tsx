@@ -1,47 +1,60 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
-import { Suspense, useState } from 'react';
 import dynamic from 'next/dynamic';
-import * as THREE from 'three';
-import InteractiveButton from './InteractiveButton';
+import { Suspense, useState, useEffect } from 'react';
 import { Archivo_Black } from 'next/font/google';
-import LvrboyModel from './components/LvrboyModel';
+
+// Dynamically import Three.js components
+const Canvas = dynamic(() => import('@react-three/fiber').then(mod => mod.Canvas), { ssr: false });
+const OrbitControls = dynamic(() => import('@react-three/drei').then(mod => mod.OrbitControls), { ssr: false });
+const Html = dynamic(() => import('@react-three/drei').then(mod => mod.Html), { ssr: false });
+
+// Import other components
+const LvrboyModel = dynamic(() => import('./LvrboyModel'), { ssr: false });
+const VimeoPlayer = dynamic(() => import('./VimeoPlayer'), { ssr: false });
+const InteractiveButton = dynamic(() => import('./InteractiveButton'), { ssr: false });
 
 const archivo = Archivo_Black({
   weight: '400',
   subsets: ['latin'],
 });
 
-const VimeoPlayer = dynamic(() => import('./VimeoPlayer'), {
-  ssr: false,
-  loading: () => null
-});
-
 function LoadingFallback() {
   return (
-    <Html center>
-      <div className="text-white text-xl font-semibold">
-        <div className="flex items-center justify-center space-x-2">
-          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Loading model...</span>
-        </div>
+    <div className="text-white text-xl font-semibold">
+      <div className="flex items-center justify-center space-x-2">
+        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Loading model...</span>
       </div>
-    </Html>
+    </div>
   );
 }
 
 export default function Scene() {
   const [showVideo, setShowVideo] = useState(false);
   const [isModelLoading, setIsModelLoading] = useState(true);
+  const [threeLoaded, setThreeLoaded] = useState(false);
+  const [threeInstance, setThreeInstance] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      import('three').then((THREE) => {
+        setThreeInstance(THREE);
+        setThreeLoaded(true);
+      });
+    }
+  }, []);
 
   const handleVideoClose = () => {
     setShowVideo(false);
   };
+
+  if (!threeLoaded || !threeInstance) {
+    return <LoadingFallback />;
+  }
 
   return (
     <div className="relative w-full h-screen bg-[#ffc0eb]">
@@ -50,8 +63,8 @@ export default function Scene() {
         camera={{ position: [0, 0, 5], fov: 45 }}
         gl={{
           antialias: true,
-          toneMapping: THREE.ACESFilmicToneMapping,
-          outputColorSpace: THREE.SRGBColorSpace,
+          toneMapping: threeInstance.ACESFilmicToneMapping,
+          outputColorSpace: threeInstance.SRGBColorSpace,
           powerPreference: "high-performance"
         }}
         dpr={[1, 2]}

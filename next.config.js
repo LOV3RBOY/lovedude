@@ -6,9 +6,7 @@ const nextConfig = {
     unoptimized: true
   },
   output: 'export',
-  distDir: '.next',
-  basePath: '',
-  assetPrefix: '',
+  distDir: 'out',
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -29,9 +27,6 @@ const nextConfig = {
   },
   experimental: {
     appDir: false
-  },
-  publicRuntimeConfig: {
-    staticFolder: '/public',
   }
 }
 

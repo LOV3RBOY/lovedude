@@ -51,7 +51,7 @@ export default function Scene() {
         gl={{
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          outputEncoding: THREE.sRGBEncoding,
+          outputColorSpace: THREE.SRGBColorSpace,
           powerPreference: "high-performance"
         }}
         dpr={[1, 2]}
@@ -76,8 +76,8 @@ export default function Scene() {
             dampingFactor={0.05}
             rotateSpeed={0.5}
             autoRotate={false}
-            enableTouchRotate={true}
-            enableTouchZoom={true}
+            enableRotate={true}
+            enableTouch={true}
           />
         </Suspense>
       </Canvas>

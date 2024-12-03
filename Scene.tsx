@@ -51,7 +51,7 @@ export default function Scene() {
         gl={{
           antialias: true,
           toneMapping: THREE.ACESFilmicToneMapping,
-          outputEncoding: THREE.sRGBEncoding,
+          outputColorSpace: THREE.SRGBColorSpace,
           powerPreference: "high-performance"
         }}
         dpr={[1, 2]}
@@ -66,8 +66,6 @@ export default function Scene() {
           <LvrboyModel onLoad={() => setIsModelLoading(false)} />
           
           <OrbitControls
-            enablePan={false}
-            enableZoom={true}
             minDistance={3}
             maxDistance={7}
             minPolarAngle={Math.PI / 3}
@@ -75,9 +73,10 @@ export default function Scene() {
             enableDamping={true}
             dampingFactor={0.05}
             rotateSpeed={0.5}
-            autoRotate={false}
-            enableTouchRotate={true}
-            enableTouchZoom={true}
+            enableRotate={true}
+            enableZoom={true}
+            enablePan={false}
+            makeDefault
           />
         </Suspense>
       </Canvas>

@@ -77,7 +77,6 @@ export default function Scene() {
             rotateSpeed={0.5}
             autoRotate={false}
             enableRotate={true}
-            enableTouch={true}
           />
         </Suspense>
       </Canvas>

@@ -3,7 +3,7 @@
 import { useGLTF } from '@react-three/drei';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, ThreeEvent } from '@react-three/fiber';
 import { gsap } from 'gsap';
 
 interface LvrboyModelProps {
@@ -99,7 +99,7 @@ export default function LvrboyModel({ onLoad }: LvrboyModelProps) {
     document.body.style.cursor = 'auto';
   };
 
-  const handleClick = (event: THREE.Event) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     
     if (!(event.object instanceof THREE.Mesh)) return;

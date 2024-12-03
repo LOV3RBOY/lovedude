@@ -7,15 +7,31 @@ const nextConfig = {
   },
   output: 'export',
   distDir: '.next',
+  basePath: '',
+  assetPrefix: '',
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       'three': require.resolve('three')
     }
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      crypto: false,
+      stream: false,
+      http: false,
+      https: false,
+      zlib: false,
+      'crypto-browserify': require.resolve('crypto-browserify'),
+    }
     return config
   },
   experimental: {
     appDir: false
+  },
+  publicRuntimeConfig: {
+    staticFolder: '/public',
   }
 }
 
